@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema({
     },
     description :  {
         type : String,
-        required : true
     },
     password : {
         type : String,
@@ -21,7 +20,7 @@ const userSchema = new mongoose.Schema({
     role: {
         type : String,
         required : true , 
-        enum : ["student" , "educator"]
+        enum : ["Student" , "Educator"]
     },
     photoUrl : {
         type : String,

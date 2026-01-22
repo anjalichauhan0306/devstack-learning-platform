@@ -1,8 +1,7 @@
-
-import User from '../models/userModel.js';
+import User from '../model/userModel.js';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
-import { genToken } from '../utils/genToken.js';
+import { genToken } from '../config/token.js';
 
 
 export const signUp = async (req , res) => {
@@ -23,7 +22,7 @@ export const signUp = async (req , res) => {
             })
         }
 
-        if (validator.isEmail(email)) {
+        if (!validator.isEmail(email)) {
             return res.status(400).json({
                 message : "Please enter a valid email"
             })
@@ -38,7 +37,7 @@ export const signUp = async (req , res) => {
         });
 
         let token = await genToken(user._id);
-        res.cokie("token" , token , {
+        res.cookie("token" , token , {
             httpOnly : true,
             secure : false,
             //process.env.NODE_ENV === "production",
@@ -55,7 +54,7 @@ export const signUp = async (req , res) => {
 
     } catch (error) {
         return res.status(500).json({
-            message : `Server Error ${error.message}`
+            message : `SignUp Error ${error.message}`
         });
     }
 }
@@ -80,7 +79,7 @@ export const login = async (req , res) => { {
         }
 
         let token = await genToken(user._id);
-        res.cokie("token" , token , {
+        res.cookie("token" , token , {
             httpOnly : true,
             secure : false,
             //process.env.NODE_ENV === "production",
@@ -96,7 +95,7 @@ export const login = async (req , res) => { {
     }
     catch (error) {
         return res.status(500).json({
-            message : `Server Error ${error.message}`
+            message : `Login Error ${error.message}`
         });
     }
     }
@@ -110,7 +109,7 @@ export const logout = async (req , res) => {
         });
     } catch (error) {
         return res.status(500).json({
-            message : `Server Error ${error.message}`
+            message : `Logout Error ${error.message}`
         }); 
     }
 }
