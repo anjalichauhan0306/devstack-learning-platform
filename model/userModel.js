@@ -32,6 +32,19 @@ const userSchema = new mongoose.Schema({
         ref : "Courses",
     }],
 
+    resetPasswordOTP :{
+        type : String,
+    },
+
+    otpExpiryTime : {
+        type : Date,
+    },
+
+    isOTPVerified : {
+        type : Boolean,
+        default : false
+    }
+
 },{timestamps:true})
     
 const User = mongoose.model("User" ,userSchema)
