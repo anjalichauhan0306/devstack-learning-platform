@@ -1,51 +1,66 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-    name : {
-        type : String,
-        required : true
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    email : {
-        type : String,
-        required : true , 
-        unique : true
+    email: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    description :  {
-        type : String,
+    description: {
+      type: String,
     },
-    password : {
-        type : String,
-        required : true
+    password: {
+      type: String,
     },
     role: {
-        type : String,
-        required : true , 
-        enum : ["Student" , "Educator"]
+      type: String,
+      required: true,
+      enum: ["Student", "Educator"],
     },
-    photoUrl : {
-        type : String,
-        default: ""
-    },
-   
-    enrollCourses : [{
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Courses",
-    }],
-
-    resetPasswordOTP :{
-        type : String,
+    photoUrl: {
+      type: String,
+      default: "",
     },
 
-    otpExpiryTime : {
-        type : Date,
+    enrolledCourses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Courses",
+      },
+    ],
+
+    resetPasswordOTP: {
+      type: String,
     },
 
-    isOTPVerified : {
-        type : Boolean,
-        default : false
-    }
+    otpExpiryTime: {
+      type: Date,
+    },
 
-},{timestamps:true})
-    
-const User = mongoose.model("User" ,userSchema)
-export default(User);
+    isOTPVerified: {
+      type: Boolean,
+      default: false,
+    },
+    completedLectures: [
+      {
+        courseId: {type: mongoose.Schema.Types.ObjectId, ref: "Courses"},
+        lectureIds: [{type: mongoose.Schema.Types.ObjectId, ref: "Lecture"}],
+      }
+    ],
+    examScores: [
+      {
+        courseId: {type: mongoose.Schema.Types.ObjectId, ref: "Courses"},
+        score: Number,
+      },
+    ],
+  },
+  { timestamps: true },
+);
+
+const User = mongoose.model("User", userSchema);
+export default User;
