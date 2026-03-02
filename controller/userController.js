@@ -12,7 +12,7 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: "user Not Found" });
     }
 
-    return res.status(201).json(user);
+    return res.status(200).json(user);
   } catch (error) {
     return res.status(404).json({ message: `GetCurrentUser Error ${error}` });
   }
@@ -24,17 +24,19 @@ export const updateProfile = async (req, res) => {
     const { description, name } = req.body;
     let photoUrl;
 
+    
     if (req.file) {
-      photoUrl = await uploadOnCloudinary(req.file.path);
+      photoUrl = await uploadOnCloudinary(req.file.path, "Profile_Photos");
+    }
+    const updateData = { description, name };
+
+    if (photoUrl) {
+      updateData.photoUrl = photoUrl;
     }
 
     const user = await User.findByIdAndUpdate(
       userId,
-      {
-        description,
-        name,
-        photoUrl: photoUrl,
-      },
+      updateData,
       { new: true },
     ).select("-password");
 
@@ -76,7 +78,7 @@ export const updateProgress = async (req, res) => {
       ? Math.round((completedLectures / totalLectures) * 100)
       : 0;
 
-    return res.status(200).json({ message: "Progress Updated" });
+    return res.status(200).json({ message: "Progress Updated" ,percentage});
   } catch (error) {
     return res.status(500).json({ message: `UpdateProgress Error ${error}` });
   }
@@ -105,7 +107,6 @@ export const updateExamScore = async (req, res) => {
     return res.status(500).json({ message: `UpdateExamScore Error ${error}` });
   }
 };
-
 
 export const sendContactMail = async (req, res) => {
   try {
@@ -137,9 +138,7 @@ export const sendContactMail = async (req, res) => {
     });
 
     res.status(200).json({ success: true, message: "Email sent" });
-
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };

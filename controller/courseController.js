@@ -18,7 +18,7 @@ export const createCourse = async (req, res) => {
     let thumbnailUrl = "";
 
     if (req.file) {
-      thumbnailUrl = await uploadOnCloudinary(req.file.path);
+      thumbnailUrl = await uploadOnCloudinary(req.file.path , "Course_Thumbnails");
     }
 
     const course = await Courses.create({
@@ -46,6 +46,7 @@ export const getPublished = async (req, res) => {
     if (!courses) {
       return res.status(404).json({ message: "Courses Not Found" });
     }
+    
     return res.status(200).json(courses);
   } catch (error) {
     return res
@@ -67,7 +68,7 @@ export const getCreatorCourses = async (req, res) => {
     if (!courses) {
       return res.status(400).json({ message: "Courses Not Found" });
     }
-    return res.status(201).json(courses);
+    return res.status(200).json(courses);
   } catch (error) {
     return res
       .status(400)
@@ -86,8 +87,6 @@ export const editCourse = async (req, res) => {
       level,
       isPublished,
       isPaid,
-      quizzes,
-      certificate,
       Price,
     } = req.body;
 
@@ -123,10 +122,10 @@ export const editCourse = async (req, res) => {
 
     return res.status(201).json(course);
   } catch (error) {
-    if (!Courses) {
-      return res.status(500).json(error.message);
-    }
-  }
+  return res.status(500).json({
+    message: `Failed to edit course: ${error.message}`,
+  });
+}
 };
 
 export const getCourseById = async (req, res) => {
@@ -155,6 +154,9 @@ export const removeCourse = async (req, res) => {
       return res.status(400).json({ message: "Courses is Not Found" });
     }
 
+if (course.creator.toString() !== req.userId) {
+   return res.status(403).json({ message: "You are not authorized to delete this course" });
+}
     course = await Courses.findByIdAndDelete(courseId);
     return res.status(200).json({ message: "Course Deleted Successfully" });
   } catch (error) {
@@ -211,7 +213,6 @@ export const getCourseLecture = async (req, res) => {
     }
 
     await course.populate("lectures");
-    await course.save();
     return res.status(200).json(course);
   } catch (error) {
     return res.status(500).json({
@@ -301,7 +302,7 @@ export const getAllEnrolledStudents = async (req, res) => {
 
     for (const course of courses) {
       const price = Number(course.Price) || 0;
-      
+
       for (const student of course.enrolledStudents) {
         const id = student._id.toString();
 
@@ -313,12 +314,12 @@ export const getAllEnrolledStudents = async (req, res) => {
               email: student.email,
               photo: student.photoUrl,
             },
-            totalSpend: price, // first course price
+            totalSpend: price,
             courseCount: 1,
             enrolledCourses: [course.title],
             enrolledAt: student.createdAt,
             lastLogin: student.lastLogin || null,
-            progress: 0, 
+            progress: 0,
             rating: 0,
           });
         } else {
@@ -339,5 +340,3 @@ export const getAllEnrolledStudents = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-

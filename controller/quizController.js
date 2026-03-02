@@ -1,7 +1,8 @@
 import { Quiz } from "../model/quizModel.js";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import Course from "../model/courseModel.js";
+import Courses from "../model/courseModel.js";
+import User from "../model/userModel.js";
 
 dotenv.config();
 
@@ -9,9 +10,6 @@ const genAI = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-/* ======================================
-   GENERATE QUIZ (AI)
-====================================== */
 export const generateQuiz = async (req, res) => {
   let newQuiz;
 
@@ -24,38 +22,34 @@ export const generateQuiz = async (req, res) => {
     if (!courseId)
       return res.status(400).json({ message: "Course ID missing" });
 
-    const course = await Course.findById(courseId).populate("lectures quizzes");
+    const course =
+      await Courses.findById(courseId).populate("lectures quizzes");
 
     if (!course) return res.status(404).json({ message: "Course not found" });
 
-    // Prevent duplicate quiz
-    const existQuiz = await Quiz.findOne({ userId, courseId });
+    const existQuiz = await Quiz.findOne({
+      userId,
+      courseId,
+    }).lean();
     if (existQuiz && existQuiz.questions?.length > 0) {
       return res.status(400).json({ message: "Quiz already generated" });
     }
 
     newQuiz = await Quiz.create({ userId, courseId, questions: [] });
-    const prompt = `
-Generate 10 technical multiple choice questions for the course titled:
-genearate the questions based on the course title and the lecture titles of the course.  The questions should be in English. Each question should have 4 options and only 1 correct answer. Also provide a brief explanation for the correct answer. Format the response in JSON as shown below: "${course.title}"
+    const prompt = `Generate 10 technical multiple choice questions for the course titled:
+                    genearate the questions based on the course title and the lecture titles of the course.  The questions should be in English. Each question should have 4 options and only 1 correct answer. Also provide a brief explanation for the correct answer. Format the response in JSON as shown below: "${course.title}" quiz have must be hard level and should test the in depth understanding of the course content. Return ONLY valid JSON in this format:
 
-quiz have must be hard level and should test the in depth understanding of the course content. 
-
-Return ONLY valid JSON in this format:
-
-{
-  "questions": [
-    {
-      "question": "String",
-      "options": ["String","String","String","String"],
-      "correctAnswer": "String",
-      "explanation": "String"
-    }
-  ]
-}
-
-No extra text.
-`;
+                    {
+                      "questions": [
+                        {
+                          "question": "String",
+                          "options": ["String","String","String","String"],
+                          "correctAnswer": "String",
+                          "explanation": "String"
+                        }
+                      ]
+                    }  
+                    No extra text.`;
 
     const result = await genAI.models.generateContent({
       model: "gemini-2.5-flash",
@@ -86,29 +80,24 @@ No extra text.
     newQuiz.questions = generatedQuestions;
     await newQuiz.save();
 
-   if (!course.quizzes) {
-  course.quizzes = [];
-}
+    if (!course.quizzes) {
+      course.quizzes = [];
+    }
 
-course.quizzes.push(newQuiz._id);
-await course.save();
+    course.quizzes.push(newQuiz._id);
+    await course.save();
 
     return res
       .status(201)
       .json({ message: "Final course quiz generated", quiz: newQuiz });
-
   } catch (error) {
-
-    console.error("Generate Quiz Error:", error);
     if (newQuiz) await Quiz.findByIdAndDelete(newQuiz._id);
     return res
       .status(500)
       .json({ message: `Quiz generation failed: ${error.message}` });
-
   }
 };
 
-// GET Quiz by Course ID
 export const getQuizByCourseId = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -120,89 +109,165 @@ export const getQuizByCourseId = async (req, res) => {
       return res.status(400).json({ message: "Course ID missing" });
     }
 
-    // Find the quiz for this course
     const quiz = await Quiz.findOne({ courseId }).populate("questions");
 
     if (!quiz) {
-      return res.status(404).json({ message: `Quiz not found for this course ${courseId}`});
+      return res
+        .status(404)
+        .json({ message: `Quiz not found for this course ${courseId}` });
     }
-    
-    quiz.attempts = quiz.attempts.filter(a => a.userId.toString() === req.userId);
+
+    const user = await User.findById(req.userId);
+    if (user.role === "Educator") {
+      return res.status(200).json({ quiz });
+    }
+
+    quiz.attempts = quiz.attempts.filter(
+      (a) => a.userId.toString() === req.userId,
+    );
 
     return res.status(200).json({ quiz });
   } catch (error) {
-    console.error("Get Quiz Error:", error);
     return res.status(500).json({ message: `Server error: ${error.message}` });
   }
 };
 
-/* ======================================
-   SUBMIT QUIZ
-====================================== */
 export const submitQuiz = async (req, res) => {
   try {
     const { quizId, answers } = req.body;
+    const userId = req.userId;
     const MAX_ATTEMPTS = 5;
-    if (!quizId || !answers) 
+
+    if (!quizId || !answers)
       return res.status(400).json({ message: "Missing data" });
 
     const quiz = await Quiz.findById(quizId).populate("questions");
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
+    const userAttempts = quiz.attempts.filter(
+      (a) => a.userId.toString() === userId.toString(),
+    );
+
+    if (userAttempts.length >= MAX_ATTEMPTS) {
+      const lastAttempt = userAttempts[userAttempts.length - 1];
+      const now = new Date();
+      const lastDate = new Date(lastAttempt.date);
+      const diffHours = (now - lastDate) / (1000 * 60 * 60);
+
+      if (diffHours < 24) {
+        return res.status(400).json({
+          message:
+            "Maximum attempts reached for today. Please try again after 24 hours.",
+        });
+      }
+    }
     let score = 0;
     const total = quiz.questions.length;
 
-    // Calculate score correctly
-    answers.forEach(a => {
+    answers.forEach((a) => {
       const qIndex = a.questionIndex;
       const selected = a.selectedAnswer;
 
-      if (quiz.questions[qIndex].correctAnswer === quiz.questions[qIndex].options[selected]) {
-        score++;
+      if (
+        quiz.questions[qIndex] &&
+        quiz.questions[qIndex].options[selected] !== undefined
+      ) {
+        if (
+          quiz.questions[qIndex].correctAnswer ===
+          quiz.questions[qIndex].options[selected]
+        ) {
+          score++;
+        }
       }
     });
 
-    if (quiz.attempts.length >= 5) {
-  const lastAttempt = quiz.attempts[quiz.attempts.length - 1];
-
-  const now = new Date();
-  const lastDate = new Date(lastAttempt.date);
-
-  const diffHours = (now - lastDate) / (1000 * 60 * 60);
-
-  if (diffHours < 24) {
-    return res.status(400).json({
-      message:
-        "Maximum attempts reached. Please revise the course and try again after 24 hours.",
-    });
-  } else {
-    // 🔥 RESET attempts after 24h
-    quiz.attempts = [];
-  }
-}
-
-    quiz.attempts = quiz.attempts || [];
-    quiz.attempts.push({ score, total, date: new Date()  , userId: req.userId });
-    await quiz.save();
-
-    
     const percentage = Math.round((score / total) * 100);
 
+    const newAttempt = {
+      score,
+      total,
+      date: new Date(),
+      userId: userId,
+    };
+
+    quiz.attempts.push(newAttempt);
+    await quiz.save();
+
+    const updatedUserAttempts = quiz.attempts.filter(
+      (a) => a.userId.toString() === userId.toString(),
+    );
 
     return res.status(200).json({
       message: "Quiz submitted successfully",
       score,
       total,
       percentage,
-      attemptsLeft: Math.max(0, MAX_ATTEMPTS - quiz.attempts.length), 
+      attemptsLeft: Math.max(0, MAX_ATTEMPTS - updatedUserAttempts.length),
       quiz,
     });
-
   } catch (error) {
-    
-    console.error("Submit Quiz Error:", error);
-    return res.status(500).json({ message: `Submission failed: ${error.message}` });
+    return res
+      .status(500)
+      .json({ message: `Submission failed: ${error.message}` });
   }
 };
 
+export const updateQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const { questions } = req.body;
+    const userId = req.userId;
 
+    if (!quizId || !questions) {
+      return res.status(400).json({ message: "Missing data" });
+    }
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      userId,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    await Quiz.findByIdAndUpdate(
+      quizId,
+      { questions: questions },
+      { new: true },
+    );
+
+    return res.status(200).json({
+      message: "Quiz updated successfully",
+      quiz,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: `Update failed: ${error.message}`,
+    });
+  }
+};
+
+export const deleteQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const userId = req.userId;
+
+    const quiz = await Quiz.findOneAndDelete({
+      _id: quizId,
+      userId,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    return res.status(200).json({
+      message: "Quiz deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: `Delete failed: ${error.message}`,
+    });
+  }
+};

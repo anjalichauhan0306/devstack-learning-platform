@@ -39,11 +39,11 @@ export const searchWithAi = async (req, res) => {
      `;
 
     const response = await ai.models.generateContent({
-     model: "gemini-2.5-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
-    const keyword = response.text;
+    const keyword = response.candidates[0].content.parts[0].text;
     const courses = await Courses.find({
       isPublished: true,
       $or: [
@@ -68,9 +68,7 @@ export const searchWithAi = async (req, res) => {
           { level: { $regex: keyword, $options: "i" } },
         ],
       });
-
-      console.log(courses);
-      
+      return res.status(200).json(courses);
     }
   } catch (error) {
     console.error(error);

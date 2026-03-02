@@ -1,24 +1,27 @@
-import mongoose, { mongo } from 'mongoose'
+import mongoose from "mongoose";
 
-const lectureSchema = new mongoose.Schema({
-    lectureTitle :{
-        type : String,
-        required : true
+const lectureSchema = new mongoose.Schema(
+  {
+    lectureTitle: {
+      type: String,
+      required: true,
     },
-    videoUrl :{
-        type : String,
+    videoUrl: {
+      type: String,
     },
-    isPreviewFree : {
-        type : Boolean
+    isPreviewFree: {
+      type: Boolean,
     },
-    description :{
-        type:String,
+    description: {
+      type: String,
     },
-    quiz :{
-        type :mongoose.Schema.Types.ObjectId,
-        ref:"Quiz"
-    }
-},{timestamps:true})
+    quiz: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Quiz",
+    },
+  },
+  { timestamps: true },
+);
 
-const Lecture = mongoose.model("Lecture",lectureSchema)
-export default Lecture
+const Lecture = mongoose.model("Lecture", lectureSchema);
+export default Lecture;
