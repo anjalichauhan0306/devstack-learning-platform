@@ -10,25 +10,29 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true
+      lowercase: true,
     },
     description: {
       type: String,
     },
     password: {
-      type: String, 
-      select: false
+      type: String,
+      select: false,
     },
     role: {
       type: String,
       required: true,
-      enum: ["Student", "Educator"],
+      enum: ["Student", "Educator", "admin"],
     },
     photoUrl: {
       type: String,
       default: "",
     },
 
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     enrolledCourses: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -38,12 +42,12 @@ const userSchema = new mongoose.Schema(
 
     resetPasswordOTP: {
       type: String,
-      select: false
+      select: false,
     },
 
     otpExpiryTime: {
       type: Date,
-      select: false
+      select: false,
     },
 
     isOTPVerified: {

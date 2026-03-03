@@ -16,7 +16,7 @@ export const signUp = async (req, res) => {
       });
     }
 
-    if (validator.isStrongPassword(password)) {
+    if (password.length < 6) {
       return res.status(400).json({
         message: "Password must be at least 6 characters",
       });
@@ -154,6 +154,15 @@ export const verifyOtp = async (req, res) => {
       });
     }
     
+    const isValidOtp = await bcrypt.compare(otp, user.resetPasswordOTP);
+
+
+    if (!isValidOtp || user.otpExpiryTime < Date.now()) {
+      return res.status(400).json({
+        message: "Invalid or expired OTP",
+      });
+    }
+
     user.isOTPVerified = true;
     user.resetPasswordOTP = undefined;
     user.otpExpiryTime = undefined;

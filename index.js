@@ -10,10 +10,16 @@ import courseRouter from "./routes/courseRoute.js"
 import paymentRouter from "./routes/paymentRoute.js"
 import reviewRouter from "./routes/reviewRouter.js"
 import quizRoute from "./routes/quizRoute.js"
+import errorHandler from "./middleware/errorhandler.js"
+import router from "./routes/adminRoute.js"
 
 dotenv.config()
 
 const app = express()
+
+app.use(errorHandler);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 const port = process.env.PORT || 5000;
 app.use(express.json())
 app.use(cookieParser())
@@ -33,6 +39,7 @@ app.use("/api/course",courseRouter)
 app.use("/api/payment",paymentRouter)
 app.use("/api/review",reviewRouter)
 app.use("/api/quiz", quizRoute)
+app.use("/api/admin" ,router)
 
 app.get("/",(req,res) => {
   res.send("Hello from server");
