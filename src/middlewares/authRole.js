@@ -1,4 +1,4 @@
-import User from "../model/userModel.js";
+import User from "../models/userModel.js";
 
 const isAdmin = async (req, res, next) => {
   const user = await User.findById(req.userId);

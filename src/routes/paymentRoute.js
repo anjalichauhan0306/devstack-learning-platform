@@ -1,6 +1,6 @@
 import express from 'express'
-import isAuth from "../middleware/isAuth.js";
-import { createStripeCheckout, freeEnrollCourse, verifyCheckout } from '../controller/paymentController.js'
+import isAuth from "../middlewares/isAuth.js";
+import { createStripeCheckout, freeEnrollCourse, verifyCheckout } from '../controllers/paymentController.js'
 
 const paymentRouter = express.Router()
 

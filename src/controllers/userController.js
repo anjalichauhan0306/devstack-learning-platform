@@ -1,4 +1,4 @@
-import User from "../model/userModel.js";
+import User from "../models/userModel.js";
 import uploadOnCloudinary from "../config/cloudnary.js";
 import nodemailer from "nodemailer";
 

@@ -1,8 +1,8 @@
-import { Quiz } from "../model/quizModel.js";
+import { Quiz } from "../models/quizModel.js";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import Courses from "../model/courseModel.js";
-import User from "../model/userModel.js";
+import Courses from "../models/courseModel.js";
+import User from "../models/userModel.js";
 
 dotenv.config();
 

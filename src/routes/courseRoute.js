@@ -12,11 +12,11 @@ import {
   getPublished,
   removeCourse,
   removeLecture,
-} from "../controller/courseController.js";
-import isAuth from "../middleware/isAuth.js";
-import upload from "../middleware/multer.js";
-import { searchWithAi } from "../controller/searchAiController.js";
-import { generateCertificate } from "../controller/certificateController.js";
+} from "../controllers/courseController.js";
+import isAuth from "../middlewares/isAuth.js";
+import upload from "../middlewares/multer.js";
+import { searchWithAi } from "../controllers/searchAiController.js";
+import { generateCertificate } from "../controllers/certificateController.js";
 
 const courseRouter = express.Router();
 

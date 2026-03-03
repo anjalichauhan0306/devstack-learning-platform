@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import dotenv from "dotenv";
-import Course from "../model/courseModel.js";
-import User from "../model/userModel.js";
+import Course from "../models/courseModel.js";
+import User from "../models/userModel.js";
 
 dotenv.config();
 

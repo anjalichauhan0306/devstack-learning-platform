@@ -3,9 +3,9 @@ import crypto from "crypto";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import axios from "axios";
-import User from "../model/userModel.js";
-import Courses from "../model/courseModel.js";
-import Certificate from "../model/certificate.model.js";
+import User from "../models/userModel.js";
+import Courses from "../models/courseModel.js";
+import Certificate from "../models/certificate.model.js";
 import uploadOnCloudinary from "../config/cloudnary.js";
 
 export const generateCertificate = async (req, res) => {

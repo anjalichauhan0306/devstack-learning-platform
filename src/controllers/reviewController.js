@@ -1,5 +1,5 @@
-import Courses from "../model/courseModel.js";
-import Review from "../model/reviewModel.js";
+import Courses from "../models/courseModel.js";
+import Review from "../models/reviewModel.js";
 
 export const createReview = async (req, res) => {
   try {

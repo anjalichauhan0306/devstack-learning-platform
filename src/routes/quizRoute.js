@@ -1,6 +1,6 @@
 import express from "express";
-import { deleteQuiz, generateQuiz,  getQuizByCourseId ,submitQuiz, updateQuiz} from "../controller/quizController.js";
-import isAuth  from "../middleware/isAuth.js";
+import { deleteQuiz, generateQuiz,  getQuizByCourseId ,submitQuiz, updateQuiz} from "../controllers/quizController.js";
+import isAuth  from "../middlewares/isAuth.js";
 
 const quizRouter = express.Router();
 
