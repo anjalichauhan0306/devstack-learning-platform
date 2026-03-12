@@ -39,8 +39,8 @@ export const signUp = async (req, res) => {
     let token = await genToken(user._id);
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure:true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -77,8 +77,8 @@ export const login = async (req, res) => {
     let token = await genToken(user._id);
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true ,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -119,9 +119,8 @@ export const sendOtp = async (req, res) => {
 
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const hashedOtp = await bcrypt.hash(otp,10)
 
-    user.resetPasswordOTP = hashedOtp;
+    user.resetPasswordOTP = otp;
     user.otpExpiryTime = Date.now() + 5 * 60 * 1000;
     user.isOTPVerified = false;
 
@@ -132,6 +131,7 @@ export const sendOtp = async (req, res) => {
     return res.status(200).json({
       message: "OTP sent to your email",
     });
+    
   } catch (error) {
     return res.status(500).json({
       message: `Send OTP Error ${error.message}`,
@@ -144,23 +144,12 @@ export const verifyOtp = async (req, res) => {
     const { email, otp } = req.body;
     const user = await User.findOne({ email });
 
-    if (
-      !user ||
-      user.resetPasswordOTP !== otp ||
-      user.otpExpiryTime < Date.now()
-    ) {
-      return res.status(400).json({
-        message: "Invalid OTP or expired",
-      });
+    if (!user || !user.resetPasswordOTP || user.otpExpiryTime < Date.now() ) {
+      return res.status(400).json({ message: "OTP not requested or User not found" });
     }
-    
-    const isValidOtp = await bcrypt.compare(otp, user.resetPasswordOTP);
 
-
-    if (!isValidOtp || user.otpExpiryTime < Date.now()) {
-      return res.status(400).json({
-        message: "Invalid or expired OTP",
-      });
+    if(user.resetPasswordOTP != otp){
+      return res.status(400).json({ message: "OTP not requested is Not valid" });
     }
 
     user.isOTPVerified = true;
@@ -169,13 +158,10 @@ export const verifyOtp = async (req, res) => {
 
     await user.save();
 
-    return res.status(200).json({
-      message: "OTP verified successfully",
-    });
+    return res.status(200).json({ message: "OTP verified successfully" });
+
   } catch (error) {
-    return res.status(500).json({
-      message: `Verify OTP Error ${error.message}`,
-    });
+    return res.status(500).json({ message: `Verify OTP Error: ${error.message}` });
   }
 };
 export const resetPassword = async (req, res) => {
@@ -228,7 +214,7 @@ export const googleAuth = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
