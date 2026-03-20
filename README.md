@@ -1,2 +1,18 @@
 # devstack-learning-platform
-DevStack is a role-based learning platform built using the MERN stack, focused on clean backend architecture and real-world workflows.
+
+DevTrack — AI Powered LMS Platform
+Scalable LMS platform with role-based dashboards, secure authentication, AI-powered quizzes, course management, analytics, dynamic certificates, and voice interaction.
+
+▸
+Role-based dashboards (Student, Educator, Admin)
+▸
+JWT authentication & authorization
+▸
+AI-powered quiz & exam generation
+▸
+Course management, analytics, certificates & voice interaction
+Node.js
+Express
+MongoDB
+React
+JWT
